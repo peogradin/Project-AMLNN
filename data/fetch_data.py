@@ -1,22 +1,22 @@
 #%%
+
 import yfinance as yf
 
-data = yf.download(["AAPL", "^OMX"], start="2010-01-01", end="2025-04-29")
-# %%
-print(data.head())
+tickers = ["SKF-B.ST", "NDA-SE.ST", "ASSA-B.ST",
+ "ABB.ST", "SWED-A.ST", "TEL2-B.ST", "EVO.ST",
+ "SAAB-B.ST", "SHB-A.ST", "SINCH.ST", "HM-B.ST", 
+ "TELIA.ST", "SBB-B.ST", "SEB-A.ST", "ALFA.ST", 
+ "ESSITY-B.ST", "NIBE-B.ST", "INVE-B.ST", "HEXA-B.ST", 
+ "AZN.ST", "BOL.ST", "KINV-B.ST", "SCA-B.ST", 
+ "ERIC-B.ST", "ATCO-A.ST", "GETI-B.ST", "SAND.ST", 
+ "ELUX-B.ST", "VOLV-B.ST"]
+
+data = yf.download(tickers=tickers, start="2000-01-01", end="2025-04-29")
+
+print(data["Close"].head())
 
 import pandas as pd
-# convert to pandas dataframe
+
 data = pd.DataFrame(data)
-# save to csv
-data.to_csv("AAPL_OMX.csv")
-#%%
-print(data)
-import matplotlib.pyplot as plt
-# plot the data
-data['Close'].plot(title="AAPL and OMX Close Prices")
-plt.xlabel("Date")
-plt.ylabel("Price")
-plt.legend(["AAPL", "OMX"])
-plt.show()
-# %%
+
+data.to_csv("OMXS30_underlying_raw.csv")
