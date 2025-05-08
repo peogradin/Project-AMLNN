@@ -1,8 +1,10 @@
-#%%
 import yfinance as yf
 import pandas as pd
 import numpy as np
-#%%
+import ta
+
+start="2000-01-01"
+end="2025-04-29"
 
 tickers = ["SKF-B.ST", "NDA-SE.ST", "ASSA-B.ST",
  "ABB.ST", "SWED-A.ST", "TEL2-B.ST", "EVO.ST",
@@ -13,15 +15,12 @@ tickers = ["SKF-B.ST", "NDA-SE.ST", "ASSA-B.ST",
  "ERIC-B.ST", "ATCO-A.ST", "ATCO-B.ST", "GETI-B.ST", "SAND.ST", 
  "ELUX-B.ST", "VOLV-B.ST"]
 
-data = yf.download(tickers=tickers, start="2000-01-01", end="2025-04-29", group_by="ticker", auto_adjust=True)
+data = yf.download(tickers=tickers, start=start, end=end, group_by="ticker", auto_adjust=True)
 
-#%%
 
 df = data.stack(level=0).reset_index()
 df.columns = ['Date', 'Ticker', 'Open', 'High', 'Low', 'Close', 'Volume']
 df = df.set_index('Date')
-
-#%%
 
 start, end = df.index.min(), df.index.max()
 ticker_dates = df.groupby('Ticker').apply(
@@ -64,9 +63,6 @@ df['Volume'] = (
       .transform(lambda x: x.replace(0, np.nan).ffill().bfill())
 )
 
-#%%
-import ta
-
 df['SMA20'] = (
     df
     .groupby('Ticker')['Close']
@@ -97,23 +93,42 @@ for col in ['SMA20','EMA20','RSI14','ReturnVola20']:
                  .transform(lambda x: x.fillna(method='bfill').fillna(method='ffill'))
 
 
-# %%
 df.to_csv("OMXS22_raw_features.csv")
 index_value.to_frame().to_csv("MCAP_22_Index_raw.csv") 
 
 cols_model = [
-    'Ticker',        # om du använder ticker‐embedding
-    'Return',        # eller 'LogReturn' beroende på vilken du vill prediktera
+    'Ticker',        
+    'Return',        
     'LogReturn',
-    'Volume',        # redan imputad och log‐transformerad om du gjorde det
+    'Volume',        
     'SMA20',
     'EMA20',
     'RSI14',
     'ReturnVola20'
 ]
 
+macro_tickers = ['^OMX', 'SEK=X', '^VIX', 'BZ=F']
+
+macro_data = yf.download(tickers=macro_tickers, start=start, end=end, group_by="ticker", auto_adjust=True)
+
+macro_df = pd.DataFrame({
+    "OMXS30_ret":   macro_data["^OMX"]["Close"].pct_change(),
+    "USD_SEK_ret":  macro_data["SEK=X"]["Close"].pct_change(),
+    "VIX_ret":      macro_data["^VIX"]["Close"].pct_change(),
+    "BRENT_ret":    macro_data["BZ=F"]["Close"].pct_change()
+})
+
+macro_df = macro_df.ffill().bfill()
+
+
 df_model = df[cols_model].copy()
 df_model = df_model.dropna(subset=cols_model)
-print(len(df_model))
+df_model = (
+    df_model.reset_index()
+    .merge(macro_df, how='left', on='Date')
+    .set_index('Date')
+)
+
+print(df_model.head())
 
 df_model.to_csv("OMXS22_model_features_raw.csv")
