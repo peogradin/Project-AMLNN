@@ -116,4 +116,4 @@ df_model = df[cols_model].copy()
 df_model = df_model.dropna(subset=cols_model)
 print(len(df_model))
 
-df_model.to_csv("OMXS22_model_features.csv")
+df_model.to_csv("OMXS22_model_features_raw.csv")
