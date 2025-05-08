@@ -64,7 +64,7 @@ class MultiAssetDataset(Dataset):
         return self.X.shape[0]
     
     def __getitem__(self, idx):
-        return {'X': self.X[idx], 'y': self.y[idx]}
+        return self.X[idx], self.y[idx]
 
 if __name__ == "__main__":
     print("Testing MultiAssetDataset...")
