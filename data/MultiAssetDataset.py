@@ -70,7 +70,6 @@ class MultiAssetDataset(Dataset):
     def __getitem__(self, idx):
         return self.X[idx], self.y[idx]
 
-<<<<<<< Updated upstream
 if __name__ == "__main__":
     print("Testing MultiAssetDataset...")
     # Example usage
@@ -96,11 +95,3 @@ if __name__ == "__main__":
     print("TickerEmbeddedDataset test complete.")
 
 # %%
-=======
-    print("Samples:", len(ds))
-    X0, y0 = ds[0]
-    print("X0 shape:", X0.shape)   # -> (60, 22, 6)
-    print("y0 shape:", y0.shape)   # -> (22, 2)
-    print("First 3 assets cumulative returns for horizon [1,5]:\n", y0[:3])
-# %%
->>>>>>> Stashed changes
