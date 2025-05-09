@@ -70,6 +70,7 @@ if __name__ == "__main__":
     print("Testing MultiAssetDataset...")
     # Example usage
     df = pd.read_csv("OMXS22_model_features_raw.csv", index_col= 'Date', parse_dates=True)
+  
     tickers = df["Ticker"].unique().tolist()
     features = ["Return", "Volume", "SMA20", "EMA20", "RSI14", "ReturnVola20"]
     window = 60
