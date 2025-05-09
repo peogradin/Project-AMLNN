@@ -8,6 +8,8 @@ from torch.utils.data import Dataset, DataLoader
 ### NOTE TO SELF: This type of dataset should probably include
 ###       index returns, repo rate, USD/SEK, and similar as features,
 ###       as features for the model to capture the market context.
+
+### NOTE 2: Need to fix getitem and also fix the targets to be cumulative returns.
 ###
 
 class TickerEmbeddedDataset(Dataset):
@@ -57,7 +59,7 @@ if __name__ == "__main__":
     # Example usage
     df = pd.read_csv("OMXS22_model_features_raw.csv", index_col= 'Date', parse_dates=True)
     tickers = df["Ticker"].unique().tolist()
-    features = [c for c in df.columns if c not in ("Ticker")]
+    features = [c for c in df.columns if c not in ("Ticker", "Return")]
     window = 60
     horizon = 1
 
