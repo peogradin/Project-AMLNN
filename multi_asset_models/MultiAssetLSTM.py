@@ -51,7 +51,7 @@ class MultiAssetLSTM(nn.Module):
         out, _ = self.lstm(x)
         h = out[:, -1, :]
         y = self.fc(h)
-        return y.view(-1, self.n_assets, self.horizon_length)
+        return y #.view(-1, self.n_assets, self.horizon_length)
     
 if __name__ == "__main__":
     # Test MultiAssetLSTM
