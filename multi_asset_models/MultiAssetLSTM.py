@@ -45,24 +45,20 @@ class MultiAssetLSTM(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        x: (B, W, A, F)
+        x: (B, W, A*F)
         returns y: (B, A, H)
         """
-        B, W, A, F = x.shape
-        
-        x = x.view(B, W, A * F)
         out, _ = self.lstm(x)
         h = out[:, -1, :]
         y = self.fc(h)
-
-        return y.view(B, A, self.horizon_length)
+        return y.view(-1, self.n_assets, self.horizon_length)
     
 if __name__ == "__main__":
     # Test MultiAssetLSTM
     print("Testing MultiAssetLSTM.")
     model = MultiAssetLSTM(n_assets=22, n_features=6, hidden_size=64,
                            num_layers=2, dropout=0.1, horizon = [1])
-    x = torch.randn(8, 60, 22, 6)
+    x = torch.randn(8, 60, 22*6)
     y_hat = model(x)
     print("Output shape: ", y_hat.shape)
     print("Output: ", y_hat[1])

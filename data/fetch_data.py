@@ -97,7 +97,8 @@ df.to_csv("OMXS22_raw_features.csv")
 index_value.to_frame().to_csv("MCAP_22_Index_raw.csv") 
 
 cols_model = [
-    'Ticker',        
+    'Ticker',
+    'Close',        
     'Return',        
     'LogReturn',
     'Volume',        
