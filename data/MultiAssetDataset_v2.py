@@ -10,8 +10,8 @@ from torch.utils.data import Dataset, DataLoader
 ### data for multiple assets (such as stocks, commodities etc.)
 ###
 
-class MultiAssetDataset(Dataset):
-    def __init__(self, df, tickers, features, target_col, target_is_cumulative = True, window=60, horizon=1):
+class MultiAssetSequencedDataset(Dataset):
+    def __init__(self, df, tickers, features, target_col, target_is_cumulative = True, window=60, window_step_length = 1, horizon=1):
         """
         df: DataFrame with columns ['Ticker', features...]
         tickers: List of ticker-strings
@@ -59,7 +59,7 @@ class MultiAssetDataset(Dataset):
         ys = []
         n_samples = T - window - max_h + 1
 
-        for i in range(n_samples):
+        for i in range(0, n_samples, window_step_length):
             Xs.append(arr[i : i + window])
 
             if target_is_cumulative:      
@@ -105,26 +105,3 @@ class MultiAssetDataset(Dataset):
         return y_pred * std + mean
     
     
-if __name__ == "__main__":
-    df = pd.read_csv("OMXS22_model_features_raw.csv", index_col="Date", parse_dates=True)
-    tickers = df["Ticker"].unique().tolist()
-    features = ["Close","Volume","SMA20","EMA20","RSI14","ReturnVola20"]
-    ds = MultiAssetDataset(df, tickers, features, "Close", True, window=60, horizon=1)
-    loader = DataLoader(ds, batch_size=32, shuffle=True)
-    for batch in loader:
-        X, y = batch
-        print("X shape:", X.shape)   # -> (32, 60, 22*6)
-        print("y shape:", y.shape)   # -> (32, 22, 1)
-        
-
-    print("Samples:", len(ds))
-    X0, y0 = ds[0]
-    print("X0 shape:", X0.shape)   # -> (60, 22*66)
-    print("y0 shape:", y0.shape)   # -> (22, 2)
-    print("First 3 assets cumulative returns for horizon 1:\n", y0[:3])
-
-    ds = MultiAssetDataset(df, ["KINV-B.ST"], features, target_col="Return", window=60, horizon=[1])
-    x, y = ds[0]
-    print(x.shape)  # → (60, F)
-    print(y.shape)  # → (F,) eller (1,) beroende på squeeze
-# %%
