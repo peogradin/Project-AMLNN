@@ -40,7 +40,7 @@ class MultiAssetLSTM(nn.Module):
             batch_first=True,
             dropout=dropout if num_layers > 1 else 0.0
         )
-
+        self.norm = nn.LayerNorm(hidden_size)
         self.fc = nn.Linear(hidden_size, n_assets * self.horizon_length)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -50,6 +50,7 @@ class MultiAssetLSTM(nn.Module):
         """
         out, _ = self.lstm(x)
         h = out[:, -1, :]
+        h = self.norm(h)
         y = self.fc(h)
         return y #.view(-1, self.n_assets, self.horizon_length)
     

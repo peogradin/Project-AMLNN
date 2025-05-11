@@ -104,4 +104,3 @@ class MultiAssetSequencedDataset(Dataset):
         std = torch.tensor(self.y_std, dtype=y_pred.dtype, device=y_pred.device)
         return y_pred * std + mean
     
-    
