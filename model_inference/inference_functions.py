@@ -250,6 +250,9 @@ def generate_weights_from_predictions(model, window_size, real_data, target_idx,
             if print_values_for_allocation:
                 print('x_in shape: ', x_in.shape)
                 print('windows last price: ',x_in[0,-1,0] *train_std_torch[target_idx] + train_mean_torch[target_idx])
+                print('windows last2 price: ',x_in[0,-2,0] *train_std_torch[target_idx] + train_mean_torch[target_idx])
+                print('windows last3 price: ',x_in[0,-3,0] *train_std_torch[target_idx] + train_mean_torch[target_idx])
+
                 print(f'period from idx: ', idx_start, ' to idx ', idx_end)
                 
                 print(f'prediction at {horizon}: ', pred_price)
@@ -260,12 +263,12 @@ def generate_weights_from_predictions(model, window_size, real_data, target_idx,
             
             
 
-            true_row = test_real_data_torch_norm[idx_end-1, :]# if t>0 else real_data[-num_of_future_predictions-1, 0]
+            true_row = test_real_data_torch_norm[idx_end, :]# if t>0 else real_data[-num_of_future_predictions-1, 0]
             #true_indicators[0] = pred_norm
 
             next_data_point = torch.tensor(true_row, dtype=torch.float32)
             if horizon > 1:
-                middle_points = torch.tensor(test_real_data_torch_norm[idx_start:idx_end-1,:], dtype = torch.float32)
+                middle_points = torch.tensor(test_real_data_torch_norm[idx_start+1:idx_end,:], dtype = torch.float32)
                 #print(middle_points.shape)
                 #print(next_data_point.unsqueeze(0).shape)
                 #print('last window in: ',last_window.shape)
