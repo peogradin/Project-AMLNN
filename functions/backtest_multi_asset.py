@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 
-def backtest_multiasset(ds, model, optimizer, df_prices, index_df=None, plot=True):
+def backtest_multi_asset(ds, model, optimizer, df_prices, index_df=None, plot=True):
     """
     Backtest a multi-asset portfolio strategy using a trained model and optimizer.
     Args:

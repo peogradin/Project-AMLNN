@@ -58,7 +58,9 @@ class PortfolioWeightOptimizer:
                 w: (A,), r: (A, H)
                 returns: negative log sharpe (H,)
                 """
+                print(f"w: {w.shape}", f"r: {r.shape}")
                 portfolio_return = w @ r
+                print(f"Portfolio return: {portfolio_return.shape}")
                 # print(f"Portfolio return: {portfolio_return}")
                 
                 log_returns = np.log(1 + portfolio_return)
