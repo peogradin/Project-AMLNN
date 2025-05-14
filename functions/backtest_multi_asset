@@ -1,0 +1,95 @@
+# Backtest
+#%%
+from portfolio_optimizers.portfolio_optimizer import PortfolioWeightOptimizer
+import torch
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from tqdm import tqdm
+
+
+def backtest_multiasset(ds, model, optimizer, df_prices, index_df=None, plot=True):
+    """
+    Backtest a multi-asset portfolio strategy using a trained model and optimizer.
+    Args:
+        ds (Dataset): Dataset containing the data for backtesting.
+        model (nn.Module): Trained model for making predictions.
+        optimizer (PortfolioWeightOptimizer): Portfolio weight optimizer.
+        df_prices (pd.DataFrame): DataFrame containing historical prices of assets.
+        index_df (pd.DataFrame, optional): DataFrame containing historical prices of a benchmark index.
+        plot (bool, optional): Whether to plot the results. Defaults to True.
+    Returns:
+        dict: Dictionary containing portfolio values, dates, and weights (and index values, if any).
+    """
+    model.eval()
+    device = next(model.parameters()).device
+    tickers = ds.tickers
+    H = len(ds.horizon)
+    max_h = max(ds.horizon)
+
+    portfolio_vals = [1.0]
+    portfolio_dates = []
+    portfolio_weights = []
+    start_date = ds.sequence_dates[0]
+    # Eventuellt: hämta index
+    if index_df is not None:
+        # index_df = index_df.set_index('Date').sort_index()
+        index_vals = [index_df.loc[start_date, 'Close']]  # börja på samma dag som portföljen
+    else:
+        index_vals = None
+
+    df_pivot = df_prices.pivot(columns='Ticker', values='Close')
+    df_pivot = df_pivot.ffill().bfill()
+    df_returns = df_pivot.pct_change().fillna(0)
+    
+
+    with torch.no_grad():
+        for i in (range(len(ds))):
+            X, _ = ds[i]
+            X = X.unsqueeze(0).to(device)
+            preds = model(X).cpu()
+            preds_real = ds.inverse_transform(preds).numpy()
+            preds_real = preds.view(1, len(tickers), H)
+            weights = optimizer(X.cpu(), preds_real)
+            weights = weights[0].cpu().numpy()
+
+            start_date = ds.sequence_dates[i]
+            end_date = ds.target_dates[i]
+
+            date_mask = (df_pivot.index >= start_date) & (df_pivot.index <= end_date)
+            daily_returns = df_returns.loc[date_mask]
+            if daily_returns.empty:
+                continue
+            portfolio_returns = daily_returns.values @ weights
+            scaled_returns = portfolio_vals[-1] * np.cumprod(1 + portfolio_returns)
+            portfolio_vals.extend(scaled_returns.tolist())
+            portfolio_dates.extend(daily_returns.index.tolist())
+            
+            if index_df is not None:
+                index_segment = index_df.loc[daily_returns.index]['Close']
+                index_segment = index_segment / index_segment.iloc[0] * index_vals[-1]
+                index_vals.extend(index_segment.tolist())
+    result = {
+        "dates": portfolio_dates,
+        "values": portfolio_vals,
+        "weights": portfolio_weights,
+    }
+
+    if index_vals is not None:
+        result["benchmark"] = index_vals
+
+    # === Optional plot ===
+    if plot:
+        plt.figure(figsize=(12, 6))
+        plt.plot(portfolio_dates, portfolio_vals[:-1], label="Strategy")
+        if index_vals is not None:
+            plt.plot(portfolio_dates, index_vals[:-1]/index_vals[0], label="Benchmark (Index)")
+        plt.xlabel("Date")
+        plt.ylabel("Portfolio value")
+        plt.title("Backtest: Multi-asset strategy")
+        plt.legend()
+        plt.grid(True)
+        plt.tight_layout()
+        plt.show()
+
+    return result

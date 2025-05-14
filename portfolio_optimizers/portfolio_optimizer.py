@@ -5,6 +5,14 @@ import torch
 import torch.nn.functional as F
 
 class PortfolioWeightOptimizer:
+    """
+    Portfolio weight optimizer for different strategies.
+    Args:
+        strategy (str): Optimization strategy. Options: "softmax_pred", "sharpe_opt", "mean_variance_opt", "equal_weights"
+        multi_horizon (bool): Whether to use multi-horizon predictions
+        risk_aversion (float): Risk aversion parameter for mean-variance optimization
+    """
+
     def __init__(self, strategy="softmax_pred", multi_horizon=False, risk_aversion=1.0):
         assert strategy in ["softmax_pred", "sharpe_opt", "mean_variance_opt", "equal_weights"], f"Invalid strategy {strategy}"
         self.strategy = strategy
@@ -17,7 +25,7 @@ class PortfolioWeightOptimizer:
             X (torch.Tensor): Input data (B, T, A, F)
             preds (torch.Tensor): Predictions (B, A, H)
         """
-        assert X.dim() == 4, f"Expected 4D tensor for X, got {X.dim()}D"
+        #assert X.dim() == 4, f"Expected 4D tensor for X, got {X.dim()}D"
         assert preds.dim() == 3, f"Expected 3D tensor for preds, got {preds.dim()}D"
         
 

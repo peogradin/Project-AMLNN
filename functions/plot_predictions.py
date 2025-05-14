@@ -18,6 +18,8 @@ def plot_predictions(idx, tickers, loader, model, n_start=0, n_stop=20000):
 
     preds_idx = []
     trues_idx = []
+    all_preds = []
+    all_trues = []
     ticker = tickers[idx]
     with torch.no_grad():
         for Xb, yb in loader:
@@ -42,16 +44,16 @@ def plot_predictions(idx, tickers, loader, model, n_start=0, n_stop=20000):
             preds_real = preds_real.view(B, A, H)
             yb_real = yb_real.view(B, A, H)
 
-            all_preds = preds_real.cpu().numpy()
-            all_trues = yb_real.cpu().numpy()
+            all_preds.append(preds_real.cpu().numpy())
+            all_trues.append(yb_real.cpu().numpy())
 
-            preds_idx.append(preds_real[:, idx, 5].cpu().numpy())
-            trues_idx.append(yb_real[:, idx, 5].cpu().numpy())
+            preds_idx.append(preds_real[:, idx, -1].cpu().numpy())
+            trues_idx.append(yb_real[:, idx, -1].cpu().numpy())
 
     preds_idx = np.concatenate(preds_idx)
     trues_idx = np.concatenate(trues_idx)
-    preds_idx = preds_idx 
-    trues_idx = trues_idx 
+    all_preds = np.concatenate(all_preds)
+    all_trues = np.concatenate(all_trues)
     if loader.dataset.num_permutations <= 1:
         dates = loader.dataset.get_target_dates()
         dates = dates[n_start:n_stop]
@@ -79,5 +81,16 @@ def plot_predictions(idx, tickers, loader, model, n_start=0, n_stop=20000):
     accuracy = (np.abs(all_preds - all_trues)/all_trues).mean()
     accuracy = np.mean(accuracy)
     print(f"Accuracy: {accuracy:.4f}")
+
+    last_preds = all_preds[:, :, -1]  # shape (N, A)
+    last_trues = all_trues[:, :, -1]
+    accuracy_last_horizon = (np.abs(last_preds - last_trues) / last_trues).mean()
+    print(f"Total accuracy on last horizon: {accuracy_last_horizon:.4f}")
+    for i, ticker in enumerate(tickers):
+        acc_i = (np.abs(last_preds[:, i] - last_trues[:, i]) / last_trues[:, i]).mean()
+        print(f"{ticker}: {acc_i:.4f}")
+
+    stock_accuracy = (np.abs(preds_idx - trues_idx)/trues_idx).mean()
+    print(f"Stock accuracy: {stock_accuracy:.4f}")
     
 # %%
