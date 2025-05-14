@@ -240,7 +240,7 @@ def generate_weights_from_predictions(model, window_size, real_data, target_idx,
             #print(pred_ret.shape)
 
             #kelly weight
-            k = pred_ret / sigma2 if sigma2 > 1e-8 else 0.0
+            k = pred_ret / np.sqrt(sigma2) if sigma2 > 1e-8 else 0.0
             k = np.clip(k, -kelly_clip, kelly_clip)
             #print(k.shape)
 
