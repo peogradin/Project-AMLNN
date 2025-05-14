@@ -139,14 +139,14 @@ def generate_predictions_and_returns(model, window_size, real_data, target_idx, 
             preds_norm[idx_start] = pred_norm
             #print('real: ', test_real_data_torch[t, 0])
 
-            last_price_real = test_real_data_torch[idx_start - 1, 0] if t>0 else real_data[-num_of_future_predictions-1, 0]
+            last_price_real = test_real_data_torch[idx_start, 0] if t>0 else real_data[-num_of_future_predictions-1, 0]
             #print(last_price_real)
             pred_price = pred_norm * train_std_torch[target_idx] + train_mean_torch[target_idx]
             pred_ret = (pred_price - last_price_real)/last_price_real
             #print(pred_ret.shape)
 
             #kelly weight
-            k = pred_ret / sigma2 if sigma2 > 1e-8 else 0.0
+            k = pred_ret / np.sqrt(sigma2) if sigma2 > 1e-8 else 0.0
             k = np.clip(k, -kelly_clip, kelly_clip)
             #print(k.shape)
 
@@ -233,7 +233,7 @@ def generate_weights_from_predictions(model, window_size, real_data, target_idx,
             preds_norm[idx_start] = pred_norm
             #print('real: ', test_real_data_torch[t, 0])
 
-            last_price_real = test_real_data_torch[idx_start - 1, 0] if t>0 else real_data[-num_of_future_predictions-1, 0]
+            last_price_real = test_real_data_torch[idx_start, 0] if t>0 else real_data[-num_of_future_predictions-1, 0]
             #print(last_price_real)
             pred_price = pred_norm * train_std_torch[target_idx] + train_mean_torch[target_idx]
             pred_ret = (pred_price - last_price_real)/last_price_real
