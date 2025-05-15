@@ -23,7 +23,7 @@ def plot_predictions(idx, tickers, loader, model, n_start=0, n_stop=20000):
     ticker = tickers[idx]
     with torch.no_grad():
         for Xb, yb in loader:
-            preds = model(Xb)  # (B, A, H)
+            preds = model(Xb)  # (B, A*H)
             
             # B, A, H = preds.shape
             # B, T, A, F = Xb.shape

@@ -24,6 +24,11 @@ def backtest_multi_asset(ds, model, optimizer, df_prices, index_df=None, plot=Tr
     model.eval()
     device = next(model.parameters()).device
     tickers = ds.tickers
+    A = len(tickers)
+    T = ds.window
+    F = len(ds.features)
+    target_col = ds.target_col
+    target_col_idx = ds.features.index(target_col)
     H = len(ds.horizon)
     max_h = max(ds.horizon)
 
@@ -46,11 +51,18 @@ def backtest_multi_asset(ds, model, optimizer, df_prices, index_df=None, plot=Tr
     with torch.no_grad():
         for i in (range(len(ds))):
             X, _ = ds[i]
-            X = X.unsqueeze(0).to(device)
-            preds = model(X).cpu()
-            preds_real = ds.inverse_transform(preds).numpy()
-            preds_real = preds.view(1, len(tickers), H)
-            weights = optimizer(X.cpu(), preds_real)
+            X = X.unsqueeze(0)
+
+            preds = model(X)
+            preds_real = ds.inverse_transform(preds)
+            preds_real = preds_real.view(1, A, H)
+
+            X_real = ds.inverse_feature_transform(X)
+            X_real = X_real.view(1, T, A, F)
+            X_tgt = X_real[:, :, :, target_col_idx]
+            X_tgt = X_tgt.view(1, T, A, 1)
+
+            weights = optimizer(X_tgt, preds_real)
             weights = weights[0].cpu().numpy()
 
             start_date = ds.sequence_dates[i]
@@ -64,6 +76,7 @@ def backtest_multi_asset(ds, model, optimizer, df_prices, index_df=None, plot=Tr
             scaled_returns = portfolio_vals[-1] * np.cumprod(1 + portfolio_returns)
             portfolio_vals.extend(scaled_returns.tolist())
             portfolio_dates.extend(daily_returns.index.tolist())
+            portfolio_weights.append(weights.tolist())
             
             if index_df is not None:
                 index_segment = index_df.loc[daily_returns.index]['Close']
