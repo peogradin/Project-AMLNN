@@ -27,7 +27,7 @@ class Trainer:
     def _parse_batch(self, batch):
         """
         Unpack a batch from DataLoader. Supports:
-            - (x, y) where X is a tensor
+            - (X, y) where X is a tensor
             - ({...}, y) where the first element is a dict of tensors
         Returns (inputs, targets) on the correct device
         """
