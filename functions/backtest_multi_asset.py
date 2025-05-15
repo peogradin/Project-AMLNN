@@ -33,7 +33,7 @@ def backtest_multi_asset(ds, model, optimizer, df_prices, index_df=None, plot=Tr
     max_h = max(ds.horizon)
 
     portfolio_vals = [1.0]
-    portfolio_dates = []
+    portfolio_dates = [] #ds.sequence_dates[0]]
     portfolio_weights = []
     start_date = ds.sequence_dates[0]
     # Eventuellt: hämta index
@@ -50,7 +50,7 @@ def backtest_multi_asset(ds, model, optimizer, df_prices, index_df=None, plot=Tr
 
     with torch.no_grad():
         for i in (range(len(ds))):
-            X, _ = ds[i]
+            X, y = ds[i]
             X = X.unsqueeze(0)
 
             preds = model(X)
@@ -77,7 +77,8 @@ def backtest_multi_asset(ds, model, optimizer, df_prices, index_df=None, plot=Tr
             print(f"Scaled returns: {scaled_returns}")
             print(f"Weights: {weights}")
             print(f"Full horizon predictions: {preds_real[0, :, -1]}")
-            print(f"Latest values in sequence: {X_real[0, -1, :, 0]}")
+            print(f"Last know prices: {X_real[0, -1, :, 0]}")
+            print(f"first horizon target: {ds.inverse_transform(y.unsqueeze(0)).view(1, A, H)[0, :, 0]}")
             print(f"Last known price date: {start_date}")
             print(f"Horizon date: {end_date}")
             max_weight_idx = np.argmax(weights)
@@ -108,6 +109,11 @@ def backtest_multi_asset(ds, model, optimizer, df_prices, index_df=None, plot=Tr
 
     # === Optional plot ===
     if plot:
+        print(f"Len(portfolio_dates): {len(portfolio_dates)}")
+        print(f"Len(portfolio_vals): {len(portfolio_vals)}")
+        print(f"Len(portfolio_weights): {len(portfolio_weights)}")
+        print(f"Len(index_vals): {len(index_vals)}")
+        print(f"dates sorted? {sorted(portfolio_dates) == portfolio_dates}")
         plt.figure(figsize=(12, 6))
         plt.plot(portfolio_dates, portfolio_vals[:-1], label="Strategy")
         if index_vals is not None:
