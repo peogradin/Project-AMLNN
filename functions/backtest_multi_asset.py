@@ -74,6 +74,21 @@ def backtest_multi_asset(ds, model, optimizer, df_prices, index_df=None, plot=Tr
                 continue
             portfolio_returns = daily_returns.values @ weights
             scaled_returns = portfolio_vals[-1] * np.cumprod(1 + portfolio_returns)
+            print(f"Scaled returns: {scaled_returns}")
+            print(f"Weights: {weights}")
+            print(f"Full horizon predictions: {preds_real[0, :, -1]}")
+            print(f"Latest values in sequence: {X_real[0, -1, :, 0]}")
+            print(f"Last known price date: {start_date}")
+            print(f"Horizon date: {end_date}")
+            max_weight_idx = np.argmax(weights)
+            max_weight_ticker = tickers[max_weight_idx]
+            print(f"Max weight ticker: {max_weight_ticker}, weight: ({weights[max_weight_idx]})")
+            print(f"Chosen stock start price: {df_pivot.loc[start_date, max_weight_ticker]}")
+            print(f"Chosen stock end price: {df_pivot.loc[end_date, max_weight_ticker]}")
+            print(f"Chosen stock returns: {(df_pivot.loc[end_date, max_weight_ticker] - df_pivot.loc[start_date, max_weight_ticker]) / df_pivot.loc[start_date, max_weight_ticker]}")
+            print(f"Scaled returns over chosen period: {(scaled_returns[-1] - scaled_returns[0]) / scaled_returns[0]}")
+            print("\n\n\n\n")
+
             portfolio_vals.extend(scaled_returns.tolist())
             portfolio_dates.extend(daily_returns.index.tolist())
             portfolio_weights.append(weights.tolist())

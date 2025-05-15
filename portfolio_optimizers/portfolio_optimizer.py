@@ -71,8 +71,8 @@ class PortfolioWeightOptimizer:
                 ln_E_R = np.mean(log_returns)
                 ln_std_R = np.std(log_returns)
                 #print(f"Ln_E_R + Ln_std_R: -{ln_E_R} + {ln_std_R}")
-                #return -self.risk_aversion*ln_E_R + ln_std_R
-                return - self.risk_aversion * np.mean(portfolio_return) / np.std(portfolio_return)
+                return -self.risk_aversion*ln_E_R + ln_std_R
+                #return - self.risk_aversion * np.mean(portfolio_return) / np.std(portfolio_return)
             
             constraints = {'type': 'eq', 'fun': lambda w: np.sum(w) - 1}
             bounds = [(0.0, 1.0)] * A
@@ -110,8 +110,8 @@ class PortfolioWeightOptimizer:
                 portfolio_return = w @ r
                 mean_return = np.mean(portfolio_return)
                 variance_return = np.var(portfolio_return)
-                #return w @ cov @ w - self.risk_aversion * (mu @ w) 
-                return variance_return - self.risk_aversion * mean_return
+                return w @ cov @ w - self.risk_aversion * (mu @ w) 
+                #return variance_return - self.risk_aversion * mean_return
 
             constraints = {'type': 'eq', 'fun': lambda w: np.sum(w) - 1}
             bounds = [(0.0, 1.0)] * A

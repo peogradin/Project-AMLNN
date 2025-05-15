@@ -24,15 +24,6 @@ def plot_predictions(idx, tickers, loader, model, n_start=0, n_stop=20000):
     with torch.no_grad():
         for Xb, yb in loader:
             preds = model(Xb)  # (B, A*H)
-            
-            # B, A, H = preds.shape
-            # B, T, A, F = Xb.shape
-            # if preds.dim() < 3:
-            #     preds = preds.view(B, A, H)
-            # if yb.dim() < 3:
-            #     yb = yb.view(B, A, H)
-            # if Xb.dim() < 4:
-            #     Xb = Xb.view(B, T, A, F) # (B, T, A, F)
 
             preds_real = loader.dataset.inverse_transform(preds)
             yb_real = loader.dataset.inverse_transform(yb)
