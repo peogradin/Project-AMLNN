@@ -15,7 +15,7 @@ class MultiAssetSequencedDataset(Dataset):
         """
         df: DataFrame with columns ['Ticker', features...] and
         tickers: List of ticker-strings
-        features: List of feature column names
+        features: List of feature column names.
         target_col: String with the column name of the target (e.g. Close, Return, Log_return)
         target_is_cumulative: Bool, if True the target is cumulative (for returns, log-returns set to True)
         window: Number of time steps in the input sequence
