@@ -4,7 +4,7 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 
-def plot_predictions(idx, tickers, loader, model, n_start=0, n_stop=20000):
+def plot_predictions(ticker_idx, tickers, dataset, model, n_start=0, n_stop=20000):
     """
     Plot predictions vs actual on test set, taking the last time step of the predicted sequence.
     Args:
@@ -20,17 +20,17 @@ def plot_predictions(idx, tickers, loader, model, n_start=0, n_stop=20000):
     trues_idx = []
     all_preds = []
     all_trues = []
-    ticker = tickers[idx]
+    ticker = tickers[ticker_idx]
     with torch.no_grad():
-        for Xb, yb in loader:
-            preds = model(Xb)  # (B, A*H)
+        for idx, (Xb, yb) in enumerate(dataset):
+            preds = model(Xb.unsqueeze(0))  # (B, A*H)
 
-            preds_real = loader.dataset.inverse_transform(preds)
-            yb_real = loader.dataset.inverse_transform(yb)
+            preds_real = dataset.inverse_transform(preds, idx)
+            yb_real = dataset.inverse_transform(yb.unsqueeze(0), idx)
 
             B, AH = preds_real.shape
-            A = len(loader.dataset.tickers)
-            H = len(loader.dataset.horizon)
+            A = len(dataset.tickers)
+            H = len(dataset.horizon)
 
             preds_real = preds_real.view(B, A, H)
             yb_real = yb_real.view(B, A, H)
@@ -38,22 +38,22 @@ def plot_predictions(idx, tickers, loader, model, n_start=0, n_stop=20000):
             all_preds.append(preds_real.cpu().numpy())
             all_trues.append(yb_real.cpu().numpy())
 
-            preds_idx.append(preds_real[:, idx, -1].cpu().numpy())
-            trues_idx.append(yb_real[:, idx, -1].cpu().numpy())
+            preds_idx.append(preds_real[:, ticker_idx, -1].cpu().numpy())
+            trues_idx.append(yb_real[:, ticker_idx, -1].cpu().numpy())
 
     preds_idx = np.concatenate(preds_idx)
     trues_idx = np.concatenate(trues_idx)
     all_preds = np.concatenate(all_preds)
     all_trues = np.concatenate(all_trues)
-    if loader.dataset.num_permutations <= 1:
-        dates = loader.dataset.get_target_dates()
+    if dataset.num_permutations <= 1:
+        dates = dataset.get_target_dates()
         dates = dates[n_start:n_stop]
         plt.figure()
         plt.plot(dates, trues_idx[n_start:n_stop], label='Actual')
         plt.plot(dates, preds_idx[n_start:n_stop], label='Predicted')
         plt.xlabel('Date')
         plt.ylabel('Price')
-        plt.title(f"{ticker} - Predictions vs Actual with {loader.dataset.horizon[-1]} days horizon")
+        plt.title(f"{ticker} - Predictions vs Actual with {dataset.horizon[-1]} days horizon")
         plt.legend()
         plt.xticks(rotation=45)
         plt.tight_layout()
@@ -64,7 +64,7 @@ def plot_predictions(idx, tickers, loader, model, n_start=0, n_stop=20000):
         plt.plot(preds_idx[n_start:n_stop], label='Predicted')
         plt.xlabel('Sample index')
         plt.ylabel('Price')
-        plt.title(f"{ticker} - Predictions vs Actual with {loader.dataset.horizon[-1]} days horizon")
+        plt.title(f"{ticker} - Predictions vs Actual with {dataset.horizon[-1]} days horizon")
         plt.legend()
         plt.show()
 

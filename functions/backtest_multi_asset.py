@@ -54,10 +54,10 @@ def backtest_multi_asset(ds, model, optimizer, df_prices, index_df=None, plot=Tr
             X = X.unsqueeze(0)
 
             preds = model(X)
-            preds_real = ds.inverse_transform(preds)
+            preds_real = ds.inverse_transform(preds, i)
             preds_real = preds_real.view(1, A, H)
 
-            X_real = ds.inverse_feature_transform(X)
+            X_real = ds.inverse_feature_transform(X, i)
             X_real = X_real.view(1, T, A, F)
             X_tgt = X_real[:, :, :, target_col_idx]
             X_tgt = X_tgt.view(1, T, A, 1)
@@ -82,7 +82,7 @@ def backtest_multi_asset(ds, model, optimizer, df_prices, index_df=None, plot=Tr
             print(f"Weights: {weights}")
             print(f"Full horizon predictions: {preds_real[0, :, -1]}")
             print(f"Last know prices: {X_real[0, -1, :, 0]}")
-            print(f"first horizon target: {ds.inverse_transform(y.unsqueeze(0)).view(1, A, H)[0, :, 0]}")
+            print(f"first horizon target: {ds.inverse_transform(y.unsqueeze(0), i).view(1, A, H)[0, :, 0]}")
             print(f"Last known price date: {start_date}")
             print(f"Horizon date: {end_date}")
             max_weight_idx = np.argmax(weights)
@@ -91,6 +91,7 @@ def backtest_multi_asset(ds, model, optimizer, df_prices, index_df=None, plot=Tr
             print(f"Chosen stock start price: {df_pivot.loc[start_date, max_weight_ticker]}")
             print(f"Chosen stock end price: {df_pivot.loc[end_date, max_weight_ticker]}")
             print(f"Chosen stock returns: {(df_pivot.loc[end_date, max_weight_ticker] - df_pivot.loc[start_date, max_weight_ticker]) / df_pivot.loc[start_date, max_weight_ticker]}")
+            print(f"Chosen stock predicted returns: {preds_real[0, max_weight_idx, -1]}")
             print(f"Scaled returns over chosen period: {(scaled_returns[-1] - scaled_returns[0]) / scaled_returns[0]}")
             print("\n\n\n\n")
 
