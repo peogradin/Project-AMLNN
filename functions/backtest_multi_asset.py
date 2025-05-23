@@ -101,7 +101,7 @@ def backtest_multi_asset(ds, model, optimizer, df_prices, index_df=None, plot=Tr
             
             if index_df is not None:
                 index_segment = index_df.loc[daily_returns.index]['Close']
-                index_segment = index_segment / index_segment.iloc[0] * index_vals[-1]
+                #index_segment = index_segment / index_segment.iloc[0] * index_vals[-1]
                 index_vals.extend(index_segment.tolist())
     result = {
         "dates": portfolio_dates,
