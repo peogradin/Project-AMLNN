@@ -1,48 +1,71 @@
-#!/usr/bin/env python3
 import os
+import sys
+
+import numpy as np
 import pandas as pd
 
-def calculate_index_final_return_from_df(df: pd.DataFrame, start_date: str) -> float:
+def calculate_index_arithmetic_return(df: pd.DataFrame, start_date: str) -> float:
     """
-    Calculate the cumulative return of an index from `start_date` to the last available date.
-
-    Parameters:
-    - df: DataFrame containing at least ['Date', 'WeightedRet'].
-    - start_date: 'YYYY-MM-DD' string marking the beginning of the period.
-
-    Returns:
-    - Cumulative return (e.g., 0.05 for +5%).
+    Calculate the arithmetic (simple) cumulative return of the index from `start_date`
+    to the last available date by summing each day's index return.
     """
-    # 1. Ensure datetime & sort
     df['Date'] = pd.to_datetime(df['Date'])
     df = df.sort_values('Date')
 
-    # 2. Sum weighted returns per day
-    index_daily = df.groupby('Date')['WeightedRet'].sum()
+    daily_index_return = df.groupby('Date')['WeightedRet'].sum()
+    period = daily_index_return[daily_index_return.index >= pd.to_datetime(start_date)]
+    return float(period.sum())
 
-    # 3. Filter from the start date onward
-    period = index_daily[index_daily.index >= pd.to_datetime(start_date)]
+def calculate_index_geometric_return(df: pd.DataFrame, start_date: str) -> float:
+    """
+    Calculate the compounded (geometric) cumulative return of the index
+    from `start_date` to the last available date.
+    """
+    df['Date'] = pd.to_datetime(df['Date'])
+    df = df.sort_values('Date')
 
-    # 4. Compound and return
-    return (1 + period).prod() - 1
+    daily_index_return = df.groupby('Date')['WeightedRet'].sum()
+    period = daily_index_return[daily_index_return.index >= pd.to_datetime(start_date)]
+    return float((period + 1).prod() - 1)
 
-# ─── Change this to your actual absolute path ───────────────────────────────
-csv_path = '/Users/maxmagnusson/Documents/TIF360/ANN - Project L/data/OMXS22_model_features_raw.csv'
-# ──────────────────────────────────────────────────────────────────────────
+def get_index_prices(df: pd.DataFrame) -> pd.Series:
+    """
+    Build the index 'price' series as the sum of Close prices per date.
+    """
+    df['Date'] = pd.to_datetime(df['Date'])
+    df = df.sort_values('Date')
+    return df.groupby('Date')['Close'].sum()
 
-# Sanity-check that the file exists before loading
-if not os.path.isfile(csv_path):
-    raise FileNotFoundError(
-        f"CSV not found at {csv_path!r}. "
-        f"Current working dir: {os.getcwd()!r}"
-    )
+if __name__ == "__main__":
+    csv_path = '/Users/maxmagnusson/Documents/TIF360/ANN - Project L/data/OMXS22_raw_features.csv'
 
-# Load the data
-df = pd.read_csv(csv_path, parse_dates=['Date'])
+    if not os.path.isfile(csv_path):
+        sys.exit(f"ERROR: CSV not found at {csv_path!r} (cwd={os.getcwd()!r})")
 
-# Compute final return from your chosen start date
-start_date = '2023-04-17'
-final_return = calculate_index_final_return_from_df(df, start_date)
+    df = pd.read_csv(csv_path, parse_dates=['Date'])
+    df.columns = df.columns.str.strip()
 
-# Print it out in percent form
-print(f"Final return from {start_date} to the last date in the CSV: {final_return:.2%}")
+    if 'WeightedRet' not in df.columns:
+        if {'Return', 'Weight'}.issubset(df.columns):
+            df['WeightedRet'] = df['Return'] * df['Weight']
+            print("Note: computed `WeightedRet` = Return * Weight", file=sys.stderr)
+        else:
+            sys.exit(f"ERROR: Neither `WeightedRet` nor both `Return` and `Weight` found. Columns: {df.columns.tolist()}")
+
+    start_date = '2023-04-17'
+    end_date = df['Date'].max().date()
+
+    arith = calculate_index_arithmetic_return(df, start_date)
+    geo   = calculate_index_geometric_return(df, start_date)
+
+    price_series = get_index_prices(df)
+    try:
+        price_start = price_series.loc[pd.to_datetime(start_date)]
+    except KeyError:
+        sys.exit(f"ERROR: No index price available exactly on {start_date}")
+    price_end = price_series.loc[pd.to_datetime(end_date)]
+
+    print(f"Index price on {start_date}:          {price_start:.2f}")
+    print(f"Index price on {end_date}:          {price_end:.2f}")
+    print(f"Arithmetic total return from {start_date} to {end_date}: {arith:.2%}")
+    print(f"Geometric total return  from {start_date} to {end_date}: {geo:.2%}")
