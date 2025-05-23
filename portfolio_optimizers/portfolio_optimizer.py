@@ -22,7 +22,7 @@ class PortfolioWeightOptimizer:
     def __call__(self, X, preds):
         """
         Args:
-            X (torch.Tensor): Input data (B, T, A, F)
+            X (torch.Tensor): Input data (B, T, A, 1). Must have target column at last dimension. Must be real asset values.
             preds (torch.Tensor): Predictions (B, A, H)
         """
         assert X.dim() == 4, f"Expected 4D tensor for X, got {X.dim()}D"
@@ -33,7 +33,7 @@ class PortfolioWeightOptimizer:
             return self._optimize_sharpe_batch(X, preds)
 
         elif self.strategy == "softmax_pred":
-            return F.softmax(preds[:, :, -1], dim=-1)
+            return F.softmax(preds[:, :, -1], dim=1)
         
         elif self.strategy == "mean_variance_opt":
             return self._optimize_mean_variance_batch(X, preds)
@@ -55,6 +55,9 @@ class PortfolioWeightOptimizer:
             last_price = X[i, -1, :, 0].detach().cpu().numpy()
             r = r / last_price[:, None] - 1.0
             #print(f"Last price: {last_price} \n r[:, [0]]: {r0}")
+            past_prices = X[i, :, :, 0].detach().cpu().numpy() # (W, A)
+            past_returns = past_prices / past_prices[0, :] - 1.0
+            cov = np.cov(past_returns.T)
 
             def negative_log_sharpe(w):
                 """
@@ -63,16 +66,19 @@ class PortfolioWeightOptimizer:
                 """
                 #print(f"w: {w.shape}", f"r: {r.shape}")
                 portfolio_return = w @ r
+                portfolio_risk = np.std(w @ past_returns.T)
+                
                 #print(f"Portfolio return: {portfolio_return.shape}")
                 # print(f"Portfolio return: {portfolio_return}")
                 
                 log_returns = np.log(1 + portfolio_return)
+                log_risk = np.log(1 + w @ past_returns.T)
                 # print(f"Log returns: {log_returns}")
                 ln_E_R = np.mean(log_returns)
-                ln_std_R = np.std(log_returns)
+                ln_std_R = np.std(log_risk)
                 #print(f"Ln_E_R + Ln_std_R: -{ln_E_R} + {ln_std_R}")
                 return -self.risk_aversion*ln_E_R + ln_std_R
-                #return - self.risk_aversion * np.mean(portfolio_return) / np.std(portfolio_return)
+                #return - self.risk_aversion * np.mean(portfolio_return) / portfolio_risk
             
             constraints = {'type': 'eq', 'fun': lambda w: np.sum(w) - 1}
             bounds = [(0.0, 1.0)] * A
@@ -100,6 +106,8 @@ class PortfolioWeightOptimizer:
             r = preds[i].detach().cpu().numpy()
             last_price = X[i, -1, :, 0].detach().cpu().numpy()
             r = r / last_price[:, None] - 1.0
+            past_prices = X[i, :, :, 0].detach().cpu().numpy()
+            past_returns = past_prices / past_prices[0, :] - 1.0
 
             mu = r.mean(axis=1)
             cov = np.cov(r)
@@ -109,9 +117,9 @@ class PortfolioWeightOptimizer:
                 #print("first", w @ cov @ w, "second", mu @ w)
                 portfolio_return = w @ r
                 mean_return = np.mean(portfolio_return)
-                variance_return = np.var(portfolio_return)
-                return w @ cov @ w - self.risk_aversion * (mu @ w) 
-                #return variance_return - self.risk_aversion * mean_return
+                std_return = np.std(w @ past_returns.T)
+                #return w @ cov @ w - self.risk_aversion * (mu @ w) 
+                return std_return - self.risk_aversion * mean_return
 
             constraints = {'type': 'eq', 'fun': lambda w: np.sum(w) - 1}
             bounds = [(0.0, 1.0)] * A

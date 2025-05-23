@@ -33,7 +33,7 @@ def backtest_multi_asset(ds, model, optimizer, df_prices, index_df=None, plot=Tr
     max_h = max(ds.horizon)
 
     portfolio_vals = [1.0]
-    portfolio_dates = [] #ds.sequence_dates[0]]
+    portfolio_dates = [ds.sequence_dates[0]]
     portfolio_weights = []
     start_date = ds.sequence_dates[0]
     # Eventuellt: hämta index
@@ -68,7 +68,7 @@ def backtest_multi_asset(ds, model, optimizer, df_prices, index_df=None, plot=Tr
             start_date = ds.sequence_dates[i]
             end_date = ds.target_dates[i]
 
-            date_mask = (df_pivot.index >= start_date) & (df_pivot.index <= end_date)
+            date_mask = (df_pivot.index > start_date) & (df_pivot.index <= end_date)
             daily_returns = df_returns.loc[date_mask]
             if daily_returns.empty:
                 continue
@@ -120,9 +120,9 @@ def backtest_multi_asset(ds, model, optimizer, df_prices, index_df=None, plot=Tr
         print(f"Len(index_vals): {len(index_vals)}")
         print(f"dates sorted? {sorted(portfolio_dates) == portfolio_dates}")
         plt.figure(figsize=(12, 6))
-        plt.plot(portfolio_dates, portfolio_vals[:-1], label="Strategy")
+        plt.plot(portfolio_dates, portfolio_vals[:], label="Strategy")
         if index_vals is not None:
-            plt.plot(portfolio_dates, index_vals[:-1]/index_vals[0], label="Benchmark (Index)")
+            plt.plot(portfolio_dates, index_vals[:]/index_vals[0], label="Benchmark (Index)")
         plt.xlabel("Date")
         plt.ylabel("Portfolio value")
         plt.title("Backtest: Multi-asset strategy")
