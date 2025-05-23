@@ -17,7 +17,7 @@ def fetch_omxs30(period: str = '10y', interval: str = '1d', retries: int = 5, ba
     Returns:
         pandas.DataFrame: Historical market data for the OMXS30 index.
     """
-    ticker_symbol = '^OMX'
+    ticker_symbol = '^GSPC'
     ticker = yf.Ticker(ticker_symbol)
     attempt = 0
     wait = 1.0
@@ -55,7 +55,7 @@ def main():
                         help="Number of retry attempts on errors.")
     parser.add_argument('--backoff', type=float, default=1.5,
                         help="Backoff multiplier for retry delays.")
-    parser.add_argument('--outfile', type=str, default='omxs30_10y.csv',
+    parser.add_argument('--outfile', type=str, default='S&P500_10y.csv',
                         help="Path to output CSV file.")
     args = parser.parse_args()
 
