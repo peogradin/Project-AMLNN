@@ -175,3 +175,4 @@ cython_debug/
 .vscode/settings.json
 /lightning_logs
 testing.ipynb
+/.plots
