@@ -56,3 +56,5 @@ def test_model_output(model, data_loader, num_tests=20):
         predicted_temp = test_prediction[i].item()
 
         print(f"Sample {i+1}: Last input temp = {last_input_temp:.2f}, True = {true_temp:.2f}, Pred = {predicted_temp:.2f}")
+
+import numpy as np

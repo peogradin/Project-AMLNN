@@ -75,6 +75,22 @@ def calculate_asset_returns(df, tickers, horizon, num_of_test_points):
 
     return expanded_returns
 
+def calculate_asset_returns_cont(df, tickers, num_of_test_points):
+    #print(num_of_test_points)
+    returns = np.zeros((len(tickers), num_of_test_points))
+    for i, ticker in enumerate(tickers):
+        closing_prices = retrieve_test_closing_price(df, ticker, num_of_test_points)
+        #print(closing_prices)
+        #for t in range(num_of_test_points):
+        #old_price = closing_prices[t]
+        #new_price = closing_prices[t+1]
+        current_ret = np.diff(closing_prices, axis = 0) / closing_prices[:-1]
+       
+        
+        returns[i, :] = current_ret
+                 
+    return returns
+
 def calculate_portfolio_returns(allocations, returns):
     return np.sum(allocations * returns, axis=0)
 

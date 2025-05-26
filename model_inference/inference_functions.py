@@ -300,3 +300,63 @@ def plot_realized_returns(pnl, plot_only_cumulative = False):
     plt.ylabel('Cumulative Return')
     plt.tight_layout()
     plt.show()
+
+def test_model_output_percentage_diff(model, data_loader, tm, tstd, target_idx, num_tests=20):
+    
+    model.eval()
+
+    all_preds, all_true = [], []
+    first_batch = None  # we’ll keep this for the per-sample print-out
+
+    with torch.no_grad():
+        for x_batch, y_batch in data_loader:
+            #x_batch = x_batch.to(device)
+            #y_batch = y_batch.to(device)
+
+            # Forward pass
+            out = model(x_batch)
+            if isinstance(out, (tuple, list)):      # ignore extra returns (e.g. hidden state)
+                out = out[0]
+
+            all_preds.append(out.squeeze(-1)* tstd[target_idx] + tm[target_idx])        # ensure shape (batch,)
+            all_true.append(y_batch.squeeze(-1) * tstd[target_idx] + tm[target_idx])
+
+            # Save the very first batch for pretty printing later
+            if first_batch is None:
+                first_batch = (x_batch.cpu(), y_batch.cpu(), out.cpu())
+
+    # ------------------------------------------------------------------
+    # Stack everything and compute Mean Absolute Percentage Error (MAPE)
+    # ------------------------------------------------------------------
+    preds  = torch.cat(all_preds)          # (N,)
+    truth  = torch.cat(all_true)           # (N,)
+
+    abs_diff = (preds - truth).abs()
+    percentage_diff = abs_diff / truth.abs().clamp(min=1e-8) * 100  # % error
+    mean_percent_error = percentage_diff.mean().item()
+
+    print(f"\nMean absolute percentage error (MAPE): {mean_percent_error:.2f}%")
+
+    # ------------------------------------------------------------------
+    # Show a few individual samples (from the first batch)
+    # ------------------------------------------------------------------
+    x_b, y_b, p_b = first_batch
+    num_tests = min(num_tests, x_b.size(0))
+
+    print(f"\nFirst-batch sample comparisons (n = {num_tests}):")
+    for i in range(num_tests):
+        # Example feature: last temperature in feature-index 1
+        last_input_temp = (
+            x_b[i, -1, 1].item()
+            if x_b.dim() == 3 and x_b.size(2) > 1
+            else float('nan')
+        )
+        pct = percentage_diff[i].item()
+        print(
+            f"  Sample {i+1:2d}: "
+            f"Last input temp = {last_input_temp:6.2f}, "
+            f"True = {y_b[i].item()* tstd[target_idx] + tm[target_idx]:6.2f}, "
+            f"Pred = {p_b[i].item()* tstd[target_idx] + tm[target_idx]:6.2f}, "
+            f"Pct diff = {pct:6.2f}%"
+        )
+    return mean_percent_error

@@ -115,7 +115,7 @@ def generate_loaders_and_benchmark(raw_numpy_data, window_step_length, num_test_
     print(f"Benchmark Celsius: {benchmark_raw}")
     print(f"Normalized Benchmark: {benchmark}")
 
-    return train_loader, val_loader, benchmark
+    return train_loader, val_loader, benchmark, train_mean, train_std
 
 def plot_correlation_matrix(dataframe, feature_cols):
     corr = dataframe.corr()
