@@ -26,11 +26,12 @@ def retrive_and_extract_relevant_data_values(df, feature_cols, chosen_ticker, no
     volvo_dataset_norm = (dataset - means)/stds 
     volvo_values_norm = volvo_dataset_norm.values
 
-    norm_close = volvo_values_norm[:,0]
-    norm_mark_cap = volvo_values_norm[:,2]
-    norm_rsi = volvo_values_norm[:, 10]
+    
 
     if not no_plotting:
+        norm_close = volvo_values_norm[:,0]
+        norm_mark_cap = volvo_values_norm[:,2]
+        norm_rsi = volvo_values_norm[:, 10]
         plt.plot(prices, label= 'close')
         plt.plot(market_cap, label='market cap')
         plt.plot(rsi, label='rsi')
