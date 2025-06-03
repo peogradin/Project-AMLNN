@@ -53,10 +53,10 @@ class PortfolioWeightOptimizer:
             r = preds[i].detach().cpu().numpy()
             #r0 = r[:, [0]]
             last_price = X[i, -1, :, 0].detach().cpu().numpy()
-            r = r / last_price[:, None] - 1.0
+            r = r / last_price[:, None] #- 1.0
             #print(f"Last price: {last_price} \n r[:, [0]]: {r0}")
             past_prices = X[i, :, :, 0].detach().cpu().numpy() # (W, A)
-            past_returns = past_prices / past_prices[0, :] - 1.0
+            past_returns = past_prices / past_prices[0, :] #- 1.0
             cov = np.cov(past_returns.T)
 
             def negative_log_sharpe(w):
@@ -66,7 +66,10 @@ class PortfolioWeightOptimizer:
                 """
                 #print(f"w: {w.shape}", f"r: {r.shape}")
                 portfolio_return = w @ r
+                #print(f"Portfolio return: {portfolio_return.shape}")
+                
                 portfolio_risk = np.std(w @ past_returns.T)
+                
                 
                 #print(f"Portfolio return: {portfolio_return.shape}")
                 # print(f"Portfolio return: {portfolio_return}")
@@ -77,8 +80,8 @@ class PortfolioWeightOptimizer:
                 ln_E_R = np.mean(log_returns)
                 ln_std_R = np.std(log_risk)
                 #print(f"Ln_E_R + Ln_std_R: -{ln_E_R} + {ln_std_R}")
-                return -self.risk_aversion*ln_E_R + ln_std_R
-                #return - self.risk_aversion * np.mean(portfolio_return) / portfolio_risk
+                #return -self.risk_aversion*ln_E_R + ln_std_R
+                return - self.risk_aversion * np.mean(portfolio_return) / portfolio_risk
             
             constraints = {'type': 'eq', 'fun': lambda w: np.sum(w) - 1}
             bounds = [(0.0, 1.0)] * A
@@ -105,9 +108,9 @@ class PortfolioWeightOptimizer:
         for i in range(B):
             r = preds[i].detach().cpu().numpy()
             last_price = X[i, -1, :, 0].detach().cpu().numpy()
-            r = r / last_price[:, None] - 1.0
+            r = r / last_price[:, None] #- 1.0
             past_prices = X[i, :, :, 0].detach().cpu().numpy()
-            past_returns = past_prices / past_prices[0, :] - 1.0
+            past_returns = past_prices / past_prices[0, :] #- 1.0
 
             mu = r.mean(axis=1)
             cov = np.cov(r)
